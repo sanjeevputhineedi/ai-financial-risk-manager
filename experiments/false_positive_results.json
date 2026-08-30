@@ -1,0 +1,84 @@
+{
+  "legitimate_seller": {
+    "final_score": 46.382507760871654,
+    "trend": "decreasing",
+    "timeline": [
+      [
+        "initial_report_spike",
+        68.0
+      ],
+      [
+        "successful_transaction",
+        64.64
+      ],
+      [
+        "successful_transaction",
+        61.68
+      ],
+      [
+        "successful_transaction",
+        59.08
+      ],
+      [
+        "successful_transaction",
+        56.79
+      ],
+      [
+        "successful_transaction",
+        54.78
+      ],
+      [
+        "successful_transaction",
+        53.0
+      ],
+      [
+        "refund_completed_cleanly",
+        50.64
+      ],
+      [
+        "successful_transaction",
+        49.37
+      ],
+      [
+        "successful_transaction",
+        48.24
+      ],
+      [
+        "successful_transaction",
+        47.25
+      ],
+      [
+        "successful_transaction",
+        46.38
+      ]
+    ]
+  },
+  "suspicious_merchant": {
+    "final_score": 100.0,
+    "trend": "increasing",
+    "timeline": [
+      [
+        "initialized",
+        68
+      ],
+      [
+        "report:SUSPECTED_FRAUD (#1)",
+        79.84
+      ],
+      [
+        "report:REFUND_DISPUTE (#1)",
+        82.26
+      ],
+      [
+        "report:SUSPECTED_FRAUD (#2)",
+        95.89
+      ],
+      [
+        "report:SUSPECTED_FRAUD (#3)",
+        100.0
+      ]
+    ]
+  },
+  "distinguishable": true,
+  "score_gap": 53.62
+}

@@ -1,0 +1,85 @@
+{
+  "rotating_counterparties": {
+    "scenario": "rotating_counterparties",
+    "direct_reports": 0,
+    "naive_report_only_risk": 0.0,
+    "graph_derived_risk": 14.37,
+    "graph_features": {
+      "unique_counterparties": 40,
+      "suspicious_counterparties": 7,
+      "suspicious_neighbor_ratio": 0.175,
+      "transaction_concentration": 0.025,
+      "incoming_outgoing_ratio": 12000,
+      "transaction_velocity": 1.0,
+      "cluster_risk_indicator": 0.1707
+    },
+    "graph_adds_value": true
+  },
+  "related_account_cluster": {
+    "scenario": "related_account_cluster",
+    "note": "only mule_a was ever reported; graph propagates elevated risk to b/c/d",
+    "results": {
+      "mule_a": {
+        "graph_features": {
+          "unique_counterparties": 4,
+          "suspicious_counterparties": 0,
+          "suspicious_neighbor_ratio": 0.0,
+          "transaction_concentration": 0.3333,
+          "incoming_outgoing_ratio": 3.75,
+          "transaction_velocity": 3.0,
+          "cluster_risk_indicator": 0.1429
+        },
+        "graph_risk": 10.95,
+        "naive_report_only_risk": 0.0
+      },
+      "mule_b": {
+        "graph_features": {
+          "unique_counterparties": 5,
+          "suspicious_counterparties": 1,
+          "suspicious_neighbor_ratio": 0.2,
+          "transaction_concentration": 0.2521,
+          "incoming_outgoing_ratio": 5.0667,
+          "transaction_velocity": 2.0,
+          "cluster_risk_indicator": 0.1429
+        },
+        "graph_risk": 19.33,
+        "naive_report_only_risk": 0.0
+      },
+      "mule_c": {
+        "graph_features": {
+          "unique_counterparties": 5,
+          "suspicious_counterparties": 0,
+          "suspicious_neighbor_ratio": 0.0,
+          "transaction_concentration": 0.2533,
+          "incoming_outgoing_ratio": 5.3571,
+          "transaction_velocity": 1.3333,
+          "cluster_risk_indicator": 0.1429
+        },
+        "graph_risk": 9.35,
+        "naive_report_only_risk": 0.0
+      },
+      "mule_d": {
+        "graph_features": {
+          "unique_counterparties": 4,
+          "suspicious_counterparties": 0,
+          "suspicious_neighbor_ratio": 0.0,
+          "transaction_concentration": 0.2549,
+          "incoming_outgoing_ratio": 3700,
+          "transaction_velocity": 1.0,
+          "cluster_risk_indicator": 0.1429
+        },
+        "graph_risk": 9.38,
+        "naive_report_only_risk": 0.0
+      }
+    },
+    "graph_adds_value": true
+  },
+  "activity_cooldown_evasion": {
+    "scenario": "activity_cooldown_evasion",
+    "score_after_first_report": 64.0,
+    "score_after_cooldown": 57.39,
+    "score_after_second_report": 74.0,
+    "evidence_persisted": true,
+    "note": "Score decays during quiet period but a second report is amplified due to prior evidence count, preventing simple cooldown evasion."
+  }
+}

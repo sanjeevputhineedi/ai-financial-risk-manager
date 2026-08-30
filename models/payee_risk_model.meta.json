@@ -1,0 +1,26 @@
+{
+  "model_version": "payee-v1",
+  "feature_order": [
+    "account_age",
+    "transaction_count",
+    "incoming_volume",
+    "outgoing_volume",
+    "transaction_velocity",
+    "unique_senders",
+    "complaint_count",
+    "complaint_rate",
+    "successful_transaction_ratio",
+    "refund_ratio",
+    "suspicious_counterparty_count",
+    "transaction_concentration",
+    "incoming_outgoing_ratio",
+    "account_age_log",
+    "is_new_account",
+    "recent_transaction_ratio_7d",
+    "recent_complaint_ratio_30d",
+    "graph_unique_counterparties",
+    "graph_suspicious_neighbor_ratio",
+    "graph_cluster_risk_indicator"
+  ],
+  "model_type": "RandomForestClassifier"
+}
