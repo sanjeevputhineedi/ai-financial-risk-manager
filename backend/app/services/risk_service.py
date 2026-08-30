@@ -1,6 +1,7 @@
 import os
 import sys
 from typing import Dict, Any, List, Optional, Tuple
+from datetime import datetime, timezone, timedelta
 from sqlalchemy.orm import Session
 
 from backend.app.core.config import settings
@@ -25,6 +26,19 @@ except ImportError:
         logger.warning(f"Payee ML module import fallback active: {e}")
         _has_payee_ml = False
 
+# Import Sanjeev's ML personal risk model (Checkpoint 05)
+try:
+    from ml.personal_risk.api import analyze_personal_risk as ml_personal_risk
+    _has_personal_ml = True
+except ImportError:
+    try:
+        sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")))
+        from ml.personal_risk.api import analyze_personal_risk as ml_personal_risk
+        _has_personal_ml = True
+    except Exception as e:
+        logger.warning(f"Personal Risk ML module import fallback active: {e}")
+        _has_personal_ml = False
+
 
 class RiskService:
     def __init__(self, db: Session):
@@ -39,17 +53,61 @@ class RiskService:
         recipient_id: str,
         context: Optional[Dict[str, Any]] = None
     ) -> Tuple[float, List[str]]:
-        reasons = []
-        
+        """
+        Checkpoint 05 (Sanjeev): Evaluate personal spending behavior risk.
+        Uses ML anomaly detector when available, falls back to heuristics.
+        """
         account = self.account_repo.get_by_user_id(sender_id) or self.account_repo.get(sender_id) or self.account_repo.get_by_upi_id(sender_id)
+
+        # Try ML-based personal risk (Sanjeev's anomaly detector)
+        if _has_personal_ml and account:
+            try:
+                # Fetch transaction history for profile building
+                prev_txs = self.db.query(Transaction).filter(
+                    Transaction.sender_account_id == account.id,
+                    Transaction.status.in_(["COMPLETED", "RELEASED"])
+                ).order_by(Transaction.created_at.desc()).limit(200).all()
+
+                history = [
+                    {
+                        "amount": float(t.amount),
+                        "created_at": t.created_at.isoformat() if t.created_at else datetime.now(timezone.utc).isoformat(),
+                        "recipient_vpa": t.recipient_vpa
+                    }
+                    for t in prev_txs
+                ]
+
+                # Count recent transactions (last 24h)
+                cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+                recent_24h = sum(1 for t in prev_txs if t.created_at and t.created_at >= cutoff)
+
+                now = datetime.now(timezone.utc)
+                result = ml_personal_risk(
+                    sender_id=sender_id,
+                    amount=amount,
+                    recipient_id=recipient_id,
+                    transaction_history=history,
+                    balance=float(account.balance),
+                    transaction_hour=now.hour,
+                    recent_tx_count_24h=recent_24h,
+                    context=context
+                )
+
+                return float(result["personal_risk_score"]), result["reasons"]
+
+            except Exception as e:
+                logger.warning(f"ML personal risk failed, falling back to heuristics: {e}")
+
+        # Heuristic fallback (original Murali implementation)
+        reasons = []
         base_risk = 10.0
-        
+
         if account:
             prev_txs = self.db.query(Transaction).filter(
                 Transaction.sender_account_id == account.id,
                 Transaction.status.in_(["COMPLETED", "RELEASED"])
             ).all()
-            
+
             if prev_txs:
                 avg_amt = sum(t.amount for t in prev_txs) / len(prev_txs)
                 if amount > avg_amt * 5 and amount > 5000:
@@ -62,7 +120,7 @@ class RiskService:
                 if amount > 5000:
                     base_risk += 35.0
                     reasons.append("High-value initial transfer on simulated account.")
-                    
+
             if account.balance > 0 and (amount / account.balance) > 0.6:
                 base_risk += 25.0
                 reasons.append("Payment consumes over 60% of available account balance.")
@@ -84,9 +142,9 @@ class RiskService:
     ) -> Tuple[float, List[str], str, float]:
         reasons = []
         payee_vpa = recipient_id
-        
+
         payee_rep = self.payee_repo.get_by_vpa(payee_vpa)
-        
+
         if _has_payee_ml:
             try:
                 tx_context = context.copy() if context else {}
@@ -94,9 +152,9 @@ class RiskService:
                     rep_score = payee_rep.reputation_score if payee_rep else 80.0
                     reported = payee_rep.reported_count if payee_rep else 0
                     total_tx = payee_rep.total_transactions if payee_rep else 15
-                    
+
                     is_suspicious = rep_score < 40 or reported > 0 or "suspicious" in payee_vpa.lower() or "scam" in payee_vpa.lower()
-                    
+
                     record = {
                         "payee_id": payee_vpa,
                         "account_age": 180 if not is_suspicious else 12,
@@ -115,13 +173,13 @@ class RiskService:
                         "profile_type": "LEGITIMATE_MERCHANT" if not is_suspicious else "SUSPICIOUS_ACCOUNT"
                     }
                     tx_context["record"] = record
-                
+
                 ml_res = analyze_payee(payee_vpa, tx_context)
                 ml_payee_risk = float(ml_res["payee_risk"])
                 ml_reasons = ml_res.get("reasons", [])
                 ml_version = ml_res.get("model_version", "payee-v1")
                 ml_conf = float(ml_res.get("confidence", 0.9))
-                
+
                 if payee_rep and payee_rep.reported_count > 0:
                     ml_payee_risk = min(100.0, ml_payee_risk + (payee_rep.reported_count * 8.0))
                     if f"{payee_rep.reported_count} user fraud report(s)" not in ml_reasons:
@@ -142,6 +200,11 @@ class RiskService:
         return 20.0, ["New recipient with no prior transaction history."], "payee-default-v1", 0.70
 
     def analyze_transaction(self, req: RiskAnalysisRequest) -> RiskAnalysisResponse:
+        """
+        Checkpoint 08 (Sanjeev): Dual-Risk Decision Engine.
+        Combines personal_risk (Sanjeev ML) + payee_risk (Reddy ML) using
+        policy thresholds for ALLOW/WARN/HOLD/BLOCK decisions.
+        """
         personal_risk, personal_reasons = self.evaluate_personal_risk(
             sender_id=req.sender_id,
             amount=req.amount,
@@ -154,14 +217,16 @@ class RiskService:
             context=req.context
         )
 
+        # Dual-risk combination: weighted by which signal is stronger
         higher_signal = max(personal_risk, payee_risk)
         lower_signal = min(personal_risk, payee_risk)
         overall_risk = round((higher_signal * 0.65) + (lower_signal * 0.35), 1)
-        
+
         all_reasons = personal_reasons + payee_reasons
         if not all_reasons:
             all_reasons.append("Standard transaction within normal behavioral and recipient risk limits.")
 
+        # Policy threshold decision engine
         if overall_risk < 40.0:
             risk_level = "LOW"
             decision = "ALLOW"
@@ -183,6 +248,8 @@ class RiskService:
             requires_confirmation = True
             requires_hold = True
 
+        personal_model_ver = "personal-v2" if _has_personal_ml else "personal-v1"
+
         return RiskAnalysisResponse(
             personal_risk=round(personal_risk, 1),
             payee_risk=round(payee_risk, 1),
@@ -192,5 +259,5 @@ class RiskService:
             requires_confirmation=requires_confirmation,
             requires_hold=requires_hold,
             reasons=all_reasons,
-            model_version=f"{model_ver}+personal-v1"
+            model_version=f"{model_ver}+{personal_model_ver}"
         )

@@ -1,7 +1,10 @@
+import os
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -80,7 +83,18 @@ def health_check():
 # Mount API version 1
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
+# Mount Frontend static files & single page application
+frontend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend"))
+if os.path.exists(frontend_dir):
+    app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
+
+    @app.get("/", tags=["Frontend"])
+    async def serve_frontend():
+        index_path = os.path.join(frontend_dir, "index.html")
+        return FileResponse(index_path)
+
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("backend.app.main:app", host="0.0.0.0", port=8000, reload=True)
+

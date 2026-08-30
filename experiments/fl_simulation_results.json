@@ -1,0 +1,186 @@
+{
+  "simulation_config": {
+    "num_clients": 5,
+    "num_rounds": 10,
+    "samples_per_client": 200,
+    "seed": 42
+  },
+  "training_summary": {
+    "total_rounds": 2,
+    "registered_clients": 5,
+    "is_complete": true,
+    "converged": true,
+    "final_global_parameters": {
+      "global_offset": -0.5274196357327546,
+      "global_mean_anomaly_score": -0.44941634143535825,
+      "global_anomaly_ratio": 0.1,
+      "round_number": 2,
+      "converged": true
+    },
+    "convergence_history": [
+      {
+        "round": 1,
+        "delta": 0.0,
+        "offset": -0.5274196357327546,
+        "anomaly_ratio": 0.1,
+        "num_clients": 5
+      },
+      {
+        "round": 2,
+        "delta": 0.0,
+        "offset": -0.5274196357327546,
+        "anomaly_ratio": 0.1,
+        "num_clients": 5
+      }
+    ]
+  },
+  "round_results": [
+    {
+      "round": 1,
+      "status": "in_progress",
+      "global_parameters": {
+        "global_offset": -0.5274196357327546,
+        "global_mean_anomaly_score": -0.44941634143535825,
+        "global_anomaly_ratio": 0.1,
+        "round_number": 1,
+        "converged": false
+      },
+      "num_clients": 5,
+      "convergence_delta": 0.0,
+      "is_complete": false,
+      "client_summaries": [
+        {
+          "client_id": "client_1_urban_professional",
+          "samples": 200,
+          "anomaly_ratio": 0.1
+        },
+        {
+          "client_id": "client_2_student",
+          "samples": 200,
+          "anomaly_ratio": 0.1
+        },
+        {
+          "client_id": "client_3_small_business",
+          "samples": 200,
+          "anomaly_ratio": 0.1
+        },
+        {
+          "client_id": "client_4_rural_farmer",
+          "samples": 200,
+          "anomaly_ratio": 0.1
+        },
+        {
+          "client_id": "client_5_frequent_trader",
+          "samples": 200,
+          "anomaly_ratio": 0.1
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "status": "converged",
+      "global_parameters": {
+        "global_offset": -0.5274196357327546,
+        "global_mean_anomaly_score": -0.44941634143535825,
+        "global_anomaly_ratio": 0.1,
+        "round_number": 2,
+        "converged": true
+      },
+      "num_clients": 5,
+      "convergence_delta": 0.0,
+      "is_complete": true,
+      "client_summaries": [
+        {
+          "client_id": "client_1_urban_professional",
+          "samples": 200,
+          "anomaly_ratio": 0.1
+        },
+        {
+          "client_id": "client_2_student",
+          "samples": 200,
+          "anomaly_ratio": 0.1
+        },
+        {
+          "client_id": "client_3_small_business",
+          "samples": 200,
+          "anomaly_ratio": 0.1
+        },
+        {
+          "client_id": "client_4_rural_farmer",
+          "samples": 200,
+          "anomaly_ratio": 0.1
+        },
+        {
+          "client_id": "client_5_frequent_trader",
+          "samples": 200,
+          "anomaly_ratio": 0.1
+        }
+      ]
+    }
+  ],
+  "evaluation": {
+    "per_client": [
+      {
+        "client_id": "client_1_urban_professional",
+        "precision": 0.8421,
+        "recall": 1.0,
+        "f1": 0.9143,
+        "tp": 16,
+        "fp": 3,
+        "fn": 0,
+        "tn": 181,
+        "mean_anomaly_score": -0.452196196572149
+      },
+      {
+        "client_id": "client_2_student",
+        "precision": 0.8696,
+        "recall": 0.8333,
+        "f1": 0.8511,
+        "tp": 20,
+        "fp": 3,
+        "fn": 4,
+        "tn": 173,
+        "mean_anomaly_score": -0.4540783521770767
+      },
+      {
+        "client_id": "client_3_small_business",
+        "precision": 0.9524,
+        "recall": 0.6667,
+        "f1": 0.7843,
+        "tp": 20,
+        "fp": 1,
+        "fn": 10,
+        "tn": 169,
+        "mean_anomaly_score": -0.44489636831067697
+      },
+      {
+        "client_id": "client_4_rural_farmer",
+        "precision": 0.8,
+        "recall": 1.0,
+        "f1": 0.8889,
+        "tp": 12,
+        "fp": 3,
+        "fn": 0,
+        "tn": 185,
+        "mean_anomaly_score": -0.44405109934948883
+      },
+      {
+        "client_id": "client_5_frequent_trader",
+        "precision": 0.8095,
+        "recall": 0.85,
+        "f1": 0.8293,
+        "tp": 17,
+        "fp": 4,
+        "fn": 3,
+        "tn": 176,
+        "mean_anomaly_score": -0.45185969076739957
+      }
+    ],
+    "aggregate": {
+      "mean_precision": 0.8547,
+      "mean_recall": 0.87,
+      "mean_f1": 0.8536
+    }
+  },
+  "privacy_guarantee": "Raw transaction records remained on local client nodes. Only model parameter updates were aggregated centrally."
+}
