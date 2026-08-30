@@ -8,6 +8,10 @@ R14: verifies the output is stable/versioned so Sanjeev's decision
 """
 
 import json
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import pandas as pd
 from ml.payee_risk.api import analyze_payee
 

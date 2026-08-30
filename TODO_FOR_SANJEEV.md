@@ -1,85 +1,96 @@
 # Continuation Guide for Sanjeev
 
-**Purpose**: This document provides a clear, concise set of next steps for Sanjeev to continue developing the AI Financial Risk Manager project.
+**Project**: AI Financial Risk Manager for UPI-like Digital Payments  
+**Last Updated**: 2026-08-30  
+**Test Suite Status**: 31 / 31 Automated Tests Passing (`pytest`)
 
 ---
 
-## Current Project State (as of 2026-08-30)
+## 1. Executive Summary & Current State
 
-- **Repository**: `ai-financial-risk-manager`
-- **Main Branch**: `main`
-- **Latest Commit**: *includes* the newly created `README.md` based on `DEVELOPMENT.md`.
-- **Key Files Added/Modified**:
-  - `README.md` – comprehensive project overview, architecture, setup instructions, etc.
-  - No other files have been changed in this commit.
-- **Open Checkpoints** (from `DEVELOPMENT.md`):
-  1. **Checkpoint 01 – Architecture & Project Foundation** – *✅ Done* (README, repo structure).
-  2. **Checkpoint 02 – Database & Backend Foundation** – *❌ Not Started* (models, migrations, FastAPI setup).
-  3. **Checkpoint 03 – Authentication & Simulated Accounts** – *❌ Not Started* (JWT, password hashing, account APIs).
-  4. **Checkpoint 04 – Synthetic Financial Dataset** – *❌ Not Started*.
-  5. **...* (remaining checkpoints up to 15)*
+The project backend and payee risk ML intelligence foundations are **fully built, integrated, and tested**.
 
----
+### Completed Workstreams:
+1. **Murali Workstream (M1–M15 Completed)**:
+   - FastAPI application with structured error handling, security middleware, JWT authentication, and native bcrypt hashing.
+   - SQLAlchemy 2.0 ORM with 14 persistent entities, Alembic migrations (`database/migrations/`), and database seeds.
+   - 9-state payment lifecycle (`INITIATED`, `ANALYZING`, `CONFIRMATION_REQUIRED`, `CONFIRMED`, `COMPLETED`, `HELD`, `RELEASED`, `REFUNDED`, `CANCELLED`).
+   - Fund Manager / Escrow cooling period service with dynamic risk re-evaluation and auto-release / auto-refund triggers.
+   - Immutable audit logging with credential redaction.
+   - 27 automated tests under `backend/tests/` passing.
+   - Multi-stage `Dockerfile` and `docker-compose.yml` (PostgreSQL + FastAPI).
 
-## Immediate Next Tasks for Sanjeev
-
-### 1. Verify Repository Health
-- Run the test suite to ensure the current codebase passes all existing tests.
-- Command:
-  ```bash
-  pytest tests/ -v
-  ```
-- Fix any failures before proceeding.
-
-### 2. Implement Checkpoint 02 – Database & Backend Foundation
-- **Create SQLAlchemy models** for the required entities (users, accounts, recipients, transactions, etc.) under `backend/app/models/`.
-- **Generate Alembic migrations** for the initial schema.
-  ```bash
-  alembic revision --autogenerate -m "Initial schema"
-  alembic upgrade head
-  ```
-- **Add CRUD repositories** in `backend/app/repositories/` for each model (e.g., `user_repo.py`, `transaction_repo.py`).
-- **Expose basic API endpoints** in `backend/app/api/v1/` for creating and reading these resources.
-- **Update `backend/app/core/database.py`** with the proper `engine` and `SessionLocal` configuration using the `DATABASE_URL` env variable.
-
-### 3. Write Unit Tests for New Models & Repositories
-- Place tests under `tests/unit/` covering model definitions and repository CRUD operations.
-- Use the SQLite in‑memory database for fast CI runs.
-
-### 4. Update Documentation
-- Add a new section to `docs/BACKEND.md` describing the database schema and API routes added.
-- Ensure the OpenAPI spec (Swagger UI at `/docs`) reflects the new endpoints.
+2. **Reddy Workstream (R1–R15 Completed)**:
+   - Synthetic payee fraud dataset generator (`data/fraud/`, 10k records, seed=42).
+   - Payee risk Random Forest model (`models/payee_risk_model.pkl`) with 20 engineered features.
+   - Payee reputation engine with dynamic increase/decay and evidence multipliers.
+   - NetworkX transaction graph intelligence capturing counterparty concentration and suspicious neighbor ratios.
+   - Integration tests (`tests/test_integration.py`) validating the ML API contract.
 
 ---
 
-## Commit & Push Workflow (for reference)
-```bash
-# Stage the new continuation guide
-git add TODO_FOR_SANJEEV.md
+## 2. Immediate Next Tasks for Sanjeev
 
-# Commit with a clear message
-git commit -m "Add continuation guide for Sanjeev – next steps for checkpoint 02"
+### Task A: Personal Financial Risk Model (Checkpoint 05)
+- **Objective**: Build personalized spending behavior anomaly detection (statistical z-score + Isolation Forest / ML anomaly detector).
+- **Location**: `ml/personal_risk/`
+- **Requirements**:
+  - Evaluate amount deviation against user's historical spend profile (mean, std dev, max, daily/weekly frequency).
+  - Time-of-day deviation and recipient familiarity.
+  - Return `personal_risk_score` (0–100), `risk_level` (`LOW`/`MEDIUM`/`HIGH`/`CRITICAL`), and `reasons[]`.
+  - Connect this model into `backend/app/services/risk_service.py` to replace the heuristic placeholder.
 
-# Push to remote (origin/main)
-git push origin main
+### Task B: Dual-Risk Decision Engine Refinement (Checkpoint 08)
+- **Objective**: Ensure seamless combination of `personal_risk` (Sanjeev) + `payee_risk` (Reddy) using policy thresholds.
+- **Contract**: Schema documented in `docs/API.md` and `docs/PAYEE_RISK.md`.
+
+### Task C: Federated Learning Simulation (Checkpoint 10)
+- **Objective**: Implement FL using the **Flower** framework across >= 5 simulated clients with non-IID local transaction history.
+- **Location**: `federated/` (`client.py`, `server.py`, `strategy.py`, `simulation.py`).
+- **Privacy Rule**: Raw transaction records remain on local client nodes; only model parameter updates are aggregated centrally.
+
+### Task D: Explainable AI & SHAP (Checkpoint 11)
+- **Objective**: Expose clear, human-understandable reason codes and feature contributions for transactions flagged as `HIGH` or `CRITICAL`.
+- **Location**: `ml/explainability/`
+
+### Task E: UPI-like Frontend Application (Checkpoint 12)
+- **Objective**: Build a simulated React + TypeScript + Tailwind UI that connects to the FastAPI backend.
+- **Location**: `frontend/`
+- **Key Flows**:
+  1. Login / Register
+  2. Send Money / Recipient selection
+  3. Real-time Risk Assessment view (Personal score + Payee score)
+  4. Escrow Cooling Period tracker (Held -> Released / Refunded)
+  5. Transaction History & Analytics Dashboard
+
+---
+
+## 3. Quickstart & Verification Commands
+
+### Run All Tests
+```powershell
+pytest
+```
+*Expected: 31 passed in ~10 seconds.*
+
+### Run Integration Scenarios
+```powershell
+python scripts/run_integration_scenarios.py
 ```
 
-> **Note**: If you encounter any merge conflicts, resolve them locally before pushing.
+### Start Backend Locally
+```powershell
+uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
+```
+- Interactive Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
+- Health Check: [http://localhost:8000/health](http://localhost:8000/health)
 
 ---
 
-## Long‑Term Roadmap (high‑level)
-| Checkpoint | Goal |
-|------------|------|
-| 02 | Database schema, Alembic migrations, basic CRUD APIs |
-| 03 | JWT authentication, password hashing, account management |
-| 04 | Synthetic data generation pipeline |
-| 05‑06 | Personal & Payee risk models |
-| 07‑08 | Graph intelligence & decision engine |
-| 09‑10 | Fund manager & federated learning |
-| 11‑12 | Explainable AI & frontend UI |
-| 13‑15 | Security hardening, testing, final integration & demo |
-
----
-
-**Happy coding, Sanjeev!** If you run into blockers, refer back to `DEVELOPMENT.md` for detailed specifications or open an issue in the repository.
+## 4. Key Reference Documents
+- [README.md](file:///c:/Users/subha/OneDrive/Desktop/razor/ai-financial-risk-manager/README.md) — Main documentation and overview
+- [DEVELOPMENT.md](file:///c:/Users/subha/OneDrive/Desktop/razor/DEVELOPMENT.md) — 15 checkpoint master specification
+- [docs/API.md](file:///c:/Users/subha/OneDrive/Desktop/razor/ai-financial-risk-manager/docs/API.md) — FastAPI endpoint specification
+- [docs/BACKEND.md](file:///c:/Users/subha/OneDrive/Desktop/razor/ai-financial-risk-manager/docs/BACKEND.md) — Architecture & services reference
+- [docs/PAYEE_RISK.md](file:///c:/Users/subha/OneDrive/Desktop/razor/ai-financial-risk-manager/docs/PAYEE_RISK.md) — Payee ML intelligence contract
+- [MURALI_STATE.md](file:///c:/Users/subha/OneDrive/Desktop/razor/ai-financial-risk-manager/MURALI_STATE.md) & [REDDY_STATE.md](file:///c:/Users/subha/OneDrive/Desktop/razor/ai-financial-risk-manager/REDDY_STATE.md) — Completed workstream checkpoints
